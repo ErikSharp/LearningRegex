@@ -73,7 +73,7 @@ namespace LearningRegex
             matches = refMulDec.Matches("{3MyBid_5*55.5}");
             Assert(matches.Count == 0);
 
-            var randomDec = new Regex(@"^{(?<middle>\d+\.\d{1,3})\.(?<operation>(random|step|chicken))\((?<deviate>\d+)\)}");
+            var randomDec = new Regex(@"^{(?<middle>\d+\.\d{1,3})\.(?<operation>(random|step|chicken))\((?<deviate>\d+)\)}$");
             matches = randomDec.Matches("{94.123.random(13)}");
             if (matches.Any())
             {
