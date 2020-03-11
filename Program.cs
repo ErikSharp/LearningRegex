@@ -1,6 +1,7 @@
 ﻿using System;
 using static System.Diagnostics.Debug;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace LearningRegex
 {
@@ -37,8 +38,53 @@ namespace LearningRegex
 
             Quantifiers();
             SpecialCharacters();
+            Examples();
 
             System.Console.WriteLine("All asserts have run");
+        }
+
+        private static void Examples()
+        {
+            var ukPostCodes = new Regex(@"[A-Z]{1,2}\d{1,2}\s\d[A-Z]{2}");
+            Assert(ukPostCodes.IsMatch("RG22 5BY"));
+            Assert(ukPostCodes.IsMatch("E14 9UY"));
+
+            var reference = new Regex("^{.*}$");
+            Assert(reference.IsMatch("{MyBid}"));
+
+            var refMulInt = new Regex(@"^{[A-Za-z]\w*\s*\*\s*\d+}$");
+            Assert(refMulInt.IsMatch("{MyBid * 55}"));
+            Assert(refMulInt.IsMatch("{MyBid_5*55}"));
+
+            var refMulDec = new Regex(@"^{(?<Ref>[A-Za-z]\w*)\s*\*\s*(?<Dec>\d+\.\d{1,3})}$");
+            Assert(refMulDec.IsMatch("{MyBid * 55.555}"));
+            Assert(refMulDec.IsMatch("{MyBid_5*55.5}"));
+            Assert(refMulDec.IsMatch("{MyBid_5*55.}") == false);
+            var matches = refMulDec.Matches("{MyBid_5*55.5}");
+            if (matches.Any())
+            {
+                Assert(matches[0].Groups["Ref"].Value == "MyBid_5");
+                Assert(matches[0].Groups["Dec"].Value == "55.5");
+            }
+            else
+            {
+                Assert(false);
+            }
+            matches = refMulDec.Matches("{3MyBid_5*55.5}");
+            Assert(matches.Count == 0);
+
+            var randomDec = new Regex(@"^{(?<middle>\d+\.\d{1,3})\.(?<operation>(random|step|chicken))\((?<deviate>\d+)\)}");
+            matches = randomDec.Matches("{94.123.random(13)}");
+            if (matches.Any())
+            {
+                Assert(matches[0].Groups["middle"].Value == "94.123");
+                Assert(matches[0].Groups["operation"].Value == "random");
+                Assert(matches[0].Groups["deviate"].Value == "13");
+            }
+            else
+            {
+                Assert(false);
+            }
         }
 
         private static void SpecialCharacters()
@@ -97,11 +143,26 @@ namespace LearningRegex
             // [] = matches any one character in the group
             rg = new Regex("[Ekr]");
             Assert(rg.Matches("Erik Sharp").Count == 4);
+            rg = new Regex("[A-Za-z]+");
+            Assert(rg.Matches("Asbe34c").Count == 2);
             rg = new Regex(@"[a-d]\d");
             Assert(rg.IsMatch("c9"));
-            rg = new Regex(@"[^a-d]\d"); //negation
-            Assert(rg.IsMatch("e4"));
+            rg = new Regex(@"[^a-d]{3}\d{2}"); //negation
+            Assert(rg.IsMatch("est44"));
 
+            // () = Alternation
+            rg = new Regex("th(e|is|at)");
+            Assert(rg.IsMatch("the"));
+            Assert(rg.IsMatch("this"));
+            Assert(rg.IsMatch("that"));
+
+            // {2} = matches 2 times
+            rg = new Regex(@"\d{5}");
+            Assert(rg.IsMatch("92104"));
+
+            // {2,} = matches at least 2 times, but as few times possible
+            rg = new Regex(@"\d{3,}");
+            Assert(rg.Matches("92104").Count == 1);
         }
 
         private static void Quantifiers()
